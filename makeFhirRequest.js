@@ -7,24 +7,12 @@ const getAzureADToken = require('./getAzureADToken');
 
 const app = express();
 
-// // Whitelist for allowed origins
-const whitelist = ['http://localhost:8000', 'http://localhost:8000/acleap-referral'];
-
-// Configure CORS options
-const corsOptions = {
-    origin: function (origin, callback) {
-        if (whitelist.indexOf(origin) !== -1 || !origin) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true, // To allow cookies and sessions
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-};
-
 // Apply CORS with the specified options
-app.use(cors(corsOptions));
+app.use(cors({
+    origin: "*",
+    credentials: true,
+    methods: ["GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"]
+}));
 
 // Use express.json() to parse JSON payloads
 app.use(express.json());
@@ -72,7 +60,7 @@ app.get('/ping', (req, res) => {
 });
 
 // Start the server on the specified port or default to 3000
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
