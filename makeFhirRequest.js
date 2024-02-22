@@ -28,7 +28,6 @@ app.use(async (req, res, next) => {
     try {
         const accessToken = await getAzureADToken(); // Obtain token
         req.accessToken = accessToken; // Attach token to request object
-        console.log('accessToken', accessToken);
         next(); // Proceed to next middleware or route handler
     } catch (error) {
         next(error); // Pass error to error handling middleware
@@ -76,20 +75,10 @@ resources.forEach(resource => {
 // Route handler for PUT requests on the Task resource
 app.post('/update/Task/:taskId', async (req, res, next) => {
     try {
-        // console.log("req.body-=-==-=-=-=",req.body)
-        const {taskId} = req.params;
-        // const { taskId } = req.params; // Extract the Task ID from the URL parameters
+        const {taskId} = req.params; // Extract the Task ID from the URL parameters
         const updateData = req.body; // The JSON body contains the fields to be updated
 
-        console.log("req.body-=-==-=-=-=",req.body)
-        console.log("taskID-=-==-=-=-=",taskId)
-
-
-        const response = await updateTask(taskId, req.body); // Update the Task in the FHIR server
-    // console.log("taskId-------------",taskId)
-        // Perform the PUT request to update the Task, accessToken is now handled within updateFHIRResource
-        // const response = await updateFHIRResource('Task', taskId,updateData);
-        console.log("response",response)
+        const response = await updateTask(taskId, updateData); // Update the Task in the FHIR server
 
         // Respond with the updated Task data
         res.status(200).json(response);
@@ -103,69 +92,25 @@ async function updateTask(taskId, patchBody) {
       // Retrieve the FHIR server URL from environment variables
       const fhirServerURL = process.env.FHIR_SERVER_URL;
       const taskUrl = `${fhirServerURL}/Task/${taskId}`;
-  
+
       // Retrieve the Azure AD access token
       const accessToken = await getAzureADToken();
-  
+
       // Prepare headers
       const headers = {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json-patch+json'
       };
-  
+
       // Send the PATCH request to update the Task
       await axios.patch(taskUrl, JSON.stringify(patchBody), {headers});
-  
-      console.log('Task updated successfully with new status, owner, and note');
+
     } catch (error) {
       // Axios wraps the response error in the 'response' object
       console.error('Failed to update Task', error.response ? error.response.data : error.message);
       throw new Error('Error updating Task: ' + (error.response ? error.response.data : error.message));
     }
-  }
-
-// async function updateTask(taskId,patchBody) {
-//     // Retrieve the FHIR server URL from environment variables
-//      const fhirServerURL = process.env.FHIR_SERVER_URL;
-//      const taskUrl = `${fhirServerURL}/Task/${taskId}`;
-   
-//        // Retrieve the Azure AD access token
-//        const accessToken = await getAzureADToken();
-   
-//      // Send the PATCH request to update the Task
-//      const patchResponse = await fetch(taskUrl, {
-//        method: 'PATCH',
-//        headers: {
-//          'Authorization': `Bearer ${accessToken}`,
-//          'Content-Type': 'application/json-patch+json'
-//        },
-//        body: JSON.stringify(patchBody)
-//      });
-   
-//      if (!patchResponse.ok) {
-//        throw new Error('Failed to update Task');
-//      }
-   
-//      console.log('Task updated successfully with new status, owner, and note');
-//    }
-   
-
-// app.post('/updateTask/:taskId', async (req, res) => {
-//     try {
-//       const { taskId, newStatus, newOwnerReference, newNoteText } = req.params;
-
-//       console.log("taskID-=-==-=-=-=",taskId);
-//       console.log("newStatus-=-==-=-=-=",newStatus);
-  
-//       // Call your function with the parameters received from the frontend
-//     //   await updateTaskConditionally(taskId, newStatus, newOwnerReference, newNoteText);
-  
-//       res.send({ message: 'Task updated successfully' });
-//     } catch (error) {
-//       console.error(error);
-//       res.status(500).send({ error: error.message });
-//     }
-//   });
+}
 
 // Simple route handler for '/ping' to confirm the service is running
 app.get('/ping', (req, res) => {
