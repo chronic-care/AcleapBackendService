@@ -20,7 +20,6 @@ app.use(express.json()); // Parse JSON bodies in requests
 const fhirServerURL = process.env.FHIR_SERVER_URL;
 
 // Middleware to obtain an Azure AD token and attach it to the request object
-// for use in subsequent requests
 app.use(async (req, res, next) => {
     try {
         const accessToken = await getAzureADToken(); 
@@ -63,6 +62,31 @@ resources.forEach(resource => {
             next(error); 
         }
     });
+});
+
+// Function to search for patients by last name and date of birth
+const searchPatients = async (accessToken, lastName, dob) => {
+    const headers = {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+        params: { 
+            'family': lastName,
+            'birthdate': dob
+        }
+    };
+    return axios.get(`${fhirServerURL}/Patient`, headers);
+};
+
+// Route handler for searching patients by last name and date of birth
+app.get('/search/Patient', async (req, res, next) => {
+    try {
+        const accessToken = req.accessToken; // Get the access token from the request
+        const { lastName, dob } = req.query; // Get last name and dob from query parameters
+
+        const response = await searchPatients(accessToken, lastName, dob); // Call the function to search for patients
+        res.status(200).json(response.data.entry);
+    } catch (error) {
+        next(error);
+    }
 });
 
 // Route handler for PUT requests on the Task resource
