@@ -89,6 +89,179 @@ app.get('/search/Patient', async (req, res, next) => {
     }
 });
 
+function createPatientObject(
+    firstName,
+    lastName,
+    dateOfBirth,
+    gender,
+    race,
+    ethnicity,
+    sexAtBirth,
+    genderIdentity,
+    sexualOrientation,
+    language,
+    phoneNumber,
+    email,
+    address1,
+    address2,
+    state,
+    zipcode,
+    managingOrganization
+) {
+    const patient = {
+        "resourceType": "Patient",
+        "active": true,
+        "name": [
+            {
+                "use": "official",
+                "family": lastName,
+                "given": [firstName]
+            }
+        ],
+        "gender": gender,
+        "birthDate": dateOfBirth,
+        "telecom": [
+            {
+                "system": "phone",
+                "value": phoneNumber
+            },
+            {
+                "system": "email",
+                "value": email
+            }
+        ],
+        "address": [
+            {
+                "use": "home",
+                "line": [address1, address2],
+                "state": state,
+                "postalCode": zipcode
+            }
+        ],
+        "communication": [
+            {
+                "language": {
+                    "coding": [
+                        {
+                            "system": "urn:ietf:bcp:47",
+                            "code": language
+                        }
+                    ]
+                },
+                "preferred": true
+            }
+        ],
+        "extension": [
+            {
+                "url": "http://hl7.org/fhir/StructureDefinition/us-core-race",
+                "extension": [
+                    {
+                        "url": "ombCategory",
+                        "valueCoding": {
+                            "system": "urn:oid:2.16.840.1.113883.6.238",
+                            "code": race
+                        }
+                    }
+                ]
+            },
+            {
+                "url": "http://hl7.org/fhir/StructureDefinition/us-core-ethnicity",
+                "extension": [
+                    {
+                        "url": "ombCategory",
+                        "valueCoding": {
+                            "system": "urn:oid:2.16.840.1.113883.6.238",
+                            "code": ethnicity
+                        }
+                    }
+                ]
+            },
+            {
+                "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+                "valueCode": sexAtBirth
+            }
+        ],
+        "managingOrganization": {
+            "reference": managingOrganization
+        }
+    };
+
+    // Optional fields
+    if (genderIdentity) {
+        patient.extension.push({
+            "url": "https://example.com/fhir/extensions/genderIdentity",
+            "valueString": genderIdentity
+        });
+    }
+
+    if (sexualOrientation) {
+        patient.extension.push({
+            "url": "https://example.com/fhir/extensions/sexualOrientation",
+            "valueString": sexualOrientation
+        });
+    }
+
+    return patient;
+}
+
+// POST endpoint for creating a patient
+app.post('/createPatient', async (req, res) => {
+    try {
+        const {
+            firstName,
+            lastName,
+            dateOfBirth,
+            gender,
+            race,
+            ethnicity,
+            sexAtBirth,
+            genderIdentity,
+            sexualOrientation,
+            language,
+            phoneNumber,
+            email,
+            address1,
+            address2,
+            state,
+            zipcode,
+            managingOrganization
+        } = req.body;
+
+        const patient = createPatientObject(
+            firstName,
+            lastName,
+            dateOfBirth,
+            gender,
+            race,
+            ethnicity,
+            sexAtBirth,
+            genderIdentity,
+            sexualOrientation,
+            language,
+            phoneNumber,
+            email,
+            address1,
+            address2,
+            state,
+            zipcode,
+            managingOrganization
+        );
+
+        const fhirServerURL = 'YOUR_FHIR_SERVER_URL'; // Replace with your FHIR server URL
+        const accessToken = 'YOUR_ACCESS_TOKEN'; // Replace with your access token
+        const response = await axios.post(`${fhirServerURL}/Patient`, patient, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        res.status(201).json(response.data);
+    } catch (error) {
+        console.error('Error creating patient:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 // Route handler for PUT requests on the Task resource
 app.post('/update/Task/:taskId', async (req, res, next) => {
     try {
