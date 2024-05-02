@@ -104,6 +104,7 @@ function createPatientObject(
     email,
     address1,
     address2,
+    city,
     state,
     zipcode,
     managingOrganization
@@ -134,6 +135,7 @@ function createPatientObject(
             {
                 "use": "home",
                 "line": [address1, address2],
+                "city": city,
                 "state": state,
                 "postalCode": zipcode
             }
@@ -144,7 +146,7 @@ function createPatientObject(
                     "coding": [
                         {
                             "system": "urn:ietf:bcp:47",
-                            "code": language
+                            "display":language
                         }
                     ]
                 },
@@ -222,6 +224,7 @@ app.post('/createPatient', async (req, res) => {
             email,
             address1,
             address2,
+            city,
             state,
             zipcode,
             managingOrganization
@@ -242,13 +245,14 @@ app.post('/createPatient', async (req, res) => {
             email,
             address1,
             address2,
+            city,
             state,
             zipcode,
             managingOrganization
         );
 
-        const fhirServerURL = 'YOUR_FHIR_SERVER_URL'; // Replace with your FHIR server URL
-        const accessToken = 'YOUR_ACCESS_TOKEN'; // Replace with your access token
+        const fhirServerURL =  process.env.FHIR_SERVER_URL;
+        const accessToken = await getAzureADToken();
         const response = await axios.post(`${fhirServerURL}/Patient`, patient, {
             headers: {
                 'Content-Type': 'application/json',
