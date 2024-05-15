@@ -73,14 +73,15 @@ const searchPatients = async (accessToken, lastName, dob) => {
             'birthdate': dob
         }
     };
-    return axios.get(`${fhirServerURL}/Patient`, headers);
+    const patients = axios.get(`${fhirServerURL}/Patient`, headers);
+    return patients
 };
 
 // Route handler for searching patients by last name and date of birth
 app.get('/search/Patient', async (req, res, next) => {
     try {
-        const accessToken = req.accessToken; // Get the access token from the request
-        const { lastName, dob } = req.query; // Get last name and dob from query parameters
+        const accessToken = req.accessToken; 
+        const { lastName, dob } = req.query; 
 
         const response = await searchPatients(accessToken, lastName, dob); // Call the function to search for patients
         res.status(200).json(response.data.entry);
@@ -89,6 +90,7 @@ app.get('/search/Patient', async (req, res, next) => {
     }
 });
 
+//this fucntion creates a patient with the values coming from UI
 function createPatientObject(
     firstName,
     lastName,
@@ -266,6 +268,7 @@ app.post('/createPatient', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
 // Route handler for PUT requests on the Task resource
 app.post('/update/Task/:taskId', async (req, res, next) => {
     try {
