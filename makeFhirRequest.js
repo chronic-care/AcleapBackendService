@@ -104,6 +104,13 @@ const languageCodeMapping = {
     "English": "en"
 };
 
+const ethnicityCodeMapping = {
+    "Asked but unknown": "ASKU",
+    "Hispanic or Latino": "2135-2",
+    "Not Hispanic or Latino": "2186-5",
+    "Unknown": "UNK"
+}
+
 //this fucntion creates a patient with the values coming from UI
 function createPatientObject(
     firstName,
@@ -125,6 +132,7 @@ function createPatientObject(
     zipcode
 ) {
     const LanguageCode = languageCodeMapping[language] || "en";
+    const ethnicityCode = ethnicityCodeMapping[ethnicity] || "ASKU";
 
     const patient = {
         "resourceType": "Patient",
@@ -197,7 +205,7 @@ function createPatientObject(
                         "url": "ombCategory",
                         "valueCoding": {
                             "system": "urn:oid:2.16.840.1.113883.6.238",
-                            // "code": ethnicityCode,
+                            "code": ethnicityCode,
                             "display": ethnicity
                         }
                     },
@@ -276,8 +284,8 @@ app.post('/createPatient', async (req, res) => {
             dateOfBirth,
             gender,
             race,
-            ethnicity,
             sexAtBirth,
+            ethnicity,
             genderIdentity,
             sexualOrientation,
             language,
