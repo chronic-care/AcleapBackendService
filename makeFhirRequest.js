@@ -111,6 +111,25 @@ const ethnicityCodeMapping = {
     "Unknown": "UNK"
 }
 
+const raceCodeMapping = {
+    "American Indian or Alaska Native": "1002-5",
+    "Asian": "2028-9",
+    "Asked but unknown": "ASKU",
+    "Black or African American": "2054-5",
+    "Native Hawaiian or Other Pacific Islander": "2076-8",
+    "Other Race": "2131-1",
+    "Unknown": "UNK",
+    "White": "2106-3"
+}
+
+const sexAtBirthCodeMapping = {
+    "Asked but unknown": "ASKU",
+    "Female": "F",
+    "Male": "M",
+    "Other": "OTH",
+    "Unknown": "UNK"
+}
+
 //this fucntion creates a patient with the values coming from UI
 function createPatientObject(
     firstName,
@@ -131,8 +150,10 @@ function createPatientObject(
     state,
     zipcode
 ) {
-    const LanguageCode = languageCodeMapping[language] || "en";
-    const ethnicityCode = ethnicityCodeMapping[ethnicity] || "ASKU";
+    const LanguageCode = languageCodeMapping[language] || "UNK";
+    const ethnicityCode = ethnicityCodeMapping[ethnicity] || "UNK";
+    const raceCode = raceCodeMapping[race] || "UNK";
+    const sexAtBirthCode = sexAtBirthCodeMapping[sexAtBirth] || "UNK";
 
     const patient = {
         "resourceType": "Patient",
@@ -188,7 +209,7 @@ function createPatientObject(
                         "url": "ombCategory",
                         "valueCoding": {
                             "system": "urn:oid:2.16.840.1.113883.6.238",
-                            // "code": raceCode,
+                            "code": raceCode,
                             "display": race
                         }
                     },
@@ -217,7 +238,7 @@ function createPatientObject(
             },
             {
                 "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
-                "valueCode": sexAtBirth
+                "valueCode": sexAtBirthCode
             }
         ]
     };
