@@ -90,6 +90,20 @@ app.get('/search/Patient', async (req, res, next) => {
     }
 });
 
+// Language code mapping
+const languageCodeMapping = {
+    "Polish": "pl",
+    "Chinese": "zh",
+    "Tagalog": "tl",
+    "Arabic": "ar",
+    "Urdu": "ur",
+    "Gujarati": "gu",
+    "Russian": "ru",
+    "Hindi": "hi",
+    "Korean": "ko",
+    "English": "en"
+};
+
 //this fucntion creates a patient with the values coming from UI
 function createPatientObject(
     firstName,
@@ -97,8 +111,8 @@ function createPatientObject(
     dateOfBirth,
     gender,
     race,
-    ethnicity,
     sexAtBirth,
+    ethnicity,
     genderIdentity,
     sexualOrientation,
     language,
@@ -108,9 +122,10 @@ function createPatientObject(
     address2,
     city,
     state,
-    zipcode,
-    managingOrganization
+    zipcode
 ) {
+    const LanguageCode = languageCodeMapping[language] || "en";
+
     const patient = {
         "resourceType": "Patient",
         "active": true,
@@ -148,9 +163,11 @@ function createPatientObject(
                     "coding": [
                         {
                             "system": "urn:ietf:bcp:47",
+                            "code": LanguageCode,
                             "display":language
                         }
-                    ]
+                    ],
+                    "text": language
                 },
                 "preferred": true
             }
@@ -163,8 +180,13 @@ function createPatientObject(
                         "url": "ombCategory",
                         "valueCoding": {
                             "system": "urn:oid:2.16.840.1.113883.6.238",
-                            "code": race
+                            // "code": raceCode,
+                            "display": race
                         }
+                    },
+                    {
+                        "url": "text",
+                        "valueString": race
                     }
                 ]
             },
@@ -175,34 +197,51 @@ function createPatientObject(
                         "url": "ombCategory",
                         "valueCoding": {
                             "system": "urn:oid:2.16.840.1.113883.6.238",
-                            "code": ethnicity
+                            // "code": ethnicityCode,
+                            "display": ethnicity
                         }
-                    }
+                    },
+                    {
+                        "url": "text",
+                        "valueString": ethnicity
+                    }   
                 ]
             },
             {
                 "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
                 "valueCode": sexAtBirth
             }
-        ],
-        "managingOrganization": {
-            "reference": managingOrganization
-        }
+        ]
     };
 
-    // Optional fields
     if (genderIdentity) {
         patient.extension.push({
-            "url": "https://example.com/fhir/extensions/genderIdentity",
-            "valueString": genderIdentity
-        });
+                "url": "https://docs.mydata.athenahealth.com/fhir-r4/StructureDefinition/athena-patient-extension-genderIdentity",
+                "valueCodeableConcept": {
+                    "coding": [
+                        {
+                            "system": "https://docs.mydata.athenahealth.com/fhir-r4/athenaFlex/genderIdentity",
+                            "display": genderIdentity
+                        }
+                    ],
+                    "text": genderIdentity
+                }
+            });
     }
 
     if (sexualOrientation) {
         patient.extension.push({
-            "url": "https://example.com/fhir/extensions/sexualOrientation",
-            "valueString": sexualOrientation
-        });
+                "url": "https://docs.mydata.athenahealth.com/fhir-r4/StructureDefinition/athena-patient-extension-sexualOrientation",
+                "valueCodeableConcept": {
+                    "coding": [
+                        {
+                            "system": "https://docs.mydata.athenahealth.com/fhir-r4/athenaFlex/sexualOrientation",
+                            "display": sexualOrientation
+                        }
+                    ],
+                    "text": sexualOrientation
+                }
+            });
     }
 
     return patient;
@@ -217,8 +256,8 @@ app.post('/createPatient', async (req, res) => {
             dateOfBirth,
             gender,
             race,
-            ethnicity,
             sexAtBirth,
+            ethnicity,
             genderIdentity,
             sexualOrientation,
             language,
@@ -228,8 +267,7 @@ app.post('/createPatient', async (req, res) => {
             address2,
             city,
             state,
-            zipcode,
-            managingOrganization
+            zipcode
         } = req.body;
 
         const patient = createPatientObject(
@@ -249,8 +287,7 @@ app.post('/createPatient', async (req, res) => {
             address2,
             city,
             state,
-            zipcode,
-            managingOrganization
+            zipcode
         );
 
         const fhirServerURL =  process.env.FHIR_SERVER_URL;
