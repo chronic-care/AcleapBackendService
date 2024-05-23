@@ -276,6 +276,57 @@ function createPatientObject(
     return patient;
 }
 
+//this fucntion creates a Service Request with the values coming from UI
+function createServiceRequestObject(
+    patientID,
+    practitionerId,
+    practitionerName,
+    organizationId,
+    organizationName,
+    referralText
+) {
+    const ServiceRequest = {
+        "resourceType": "ServiceRequest",
+        "status": "active",
+        "intent": "order",
+        "category": [
+            {
+                "coding": [
+                    {
+                        "system": "codesystem/ordercategory",
+                        "code": "referrals",
+                        "display": "Referrals"
+                    }
+                ],
+                "text": "Referrals"
+            }
+        ],
+        "code": {
+            "text": "Chicago House TransLife Care"
+        },
+        "subject": {
+            "reference": `Patient/${patientID}`  
+        },
+        "requester": {
+            "reference": `Practitioner/${practitionerId}`,  
+            "display": practitionerName
+        },
+        "performer": [
+            {
+                "reference": `Organization/${organizationId}`, 
+                "display": organizationName
+            }
+        ],
+        "note": [
+            {
+                "text": referralText
+            }
+        ]
+    };
+
+    return ServiceRequest;
+}
+
 // POST endpoint for creating a patient
 app.post('/createPatient', async (req, res) => {
     try {
