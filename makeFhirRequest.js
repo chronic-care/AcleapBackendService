@@ -276,6 +276,60 @@ function createPatientObject(
     return patient;
 }
 
+//this fucntion creates a Service Request with the values coming from UI
+function createServiceRequestObject(
+    patientID,
+    practitionerId,
+    practitionerName,
+    organizationId,
+    organizationName,
+    referralText
+) {
+    const ServiceRequest = {
+        "resourceType": "ServiceRequest",
+        "status": "active",
+        "intent": "order",
+        "category": [
+            {
+                "coding": [
+                    {
+                        "system": "codesystem/ordercategory",
+                        "code": "referrals",
+                        "display": "Referrals"
+                    }
+                ],
+                "text": "Referrals"
+            }
+        ],
+        "code": {
+            "text": "Chicago House TransLife Care"
+        },
+        "subject": {
+            "reference": `Patient/${patientID}`  
+        },
+        "requester": {
+            "reference": `Practitioner/${practitionerId}`,  
+            "display": practitionerName
+        },
+        "performer": [
+            {
+                "reference": `Organization/${organizationId}`, 
+                "display": organizationName
+            }
+        ],
+        "note": [
+            {
+                "text": referralText
+            }
+        ],
+        "search": {
+            "mode": "match"
+        }
+    };
+
+    return ServiceRequest;
+}
+
 // POST endpoint for creating a patient
 app.post('/createPatient', async (req, res) => {
     try {
@@ -322,6 +376,43 @@ app.post('/createPatient', async (req, res) => {
         const fhirServerURL =  process.env.FHIR_SERVER_URL;
         const accessToken = await getAzureADToken();
         const response = await axios.post(`${fhirServerURL}/Patient`, patient, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        res.status(201).json(response.data);
+    } catch (error) {
+        console.error('Error creating patient:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// POST endpoint for creating a ServiceRequest
+app.post('/createServiceRequest', async (req, res) => {
+    try {
+        const {
+            patientID,
+            practitionerId,
+            practitionerName,
+            organizationId,
+            organizationName,
+            referralText
+        } = req.body;
+
+        const serviceRequest = createPatientObject(
+            patientID,
+            practitionerId,
+            practitionerName,
+            organizationId,
+            organizationName,
+            referralText
+        );
+
+        const fhirServerURL =  process.env.FHIR_SERVER_URL;
+        const accessToken = await getAzureADToken();
+        const response = await axios.post(`${fhirServerURL}/ServiceRequest`, serviceRequest, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${accessToken}`
