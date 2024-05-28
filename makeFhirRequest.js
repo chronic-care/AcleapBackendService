@@ -285,7 +285,7 @@ function createServiceRequestObject(
     organizationName,
     referralText
 ) {
-    const ServiceRequest = {
+    return {
         "resourceType": "ServiceRequest",
         "status": "active",
         "intent": "order",
@@ -313,7 +313,7 @@ function createServiceRequestObject(
         },
         "performer": [
             {
-                "reference": `Organization/${organizationId}`, 
+                "reference": `Organization/${organizationId}`,  
                 "display": organizationName
             }
         ],
@@ -321,13 +321,55 @@ function createServiceRequestObject(
             {
                 "text": referralText
             }
-        ],
-        "search": {
-            "mode": "match"
-        }
+        ]
     };
+}
 
-    return ServiceRequest;
+//this fucntion creates a Task with the values coming from UI
+function createTaskObject(
+    patientId,
+    serviceRequest,
+    requesterPractitionerId,
+    requesterPractitionerName
+) {
+    task = {
+        "resourceType": "Task",
+        "meta": {
+            "profile": [
+                "http://hl7.org/fhir/us/sdoh-clinicalcare/StructureDefinition/SDOHCC-TaskForReferralManagement"
+            ]
+        },
+        "status": "requested",
+        "intent": "order",
+        "code": {
+            "coding": [
+                {
+                    "system": "http://hl7.org/fhir/CodeSystem/task-code",
+                    "code": "fulfill",
+                    "display": "Fulfill the service request"
+                }
+            ]
+        },
+        "focus": {
+            "reference": serviceRequest
+        },
+        "for": {
+            "reference": patientId
+        },
+        "authoredOn": new Date().toISOString(),
+        "requester": {
+            "reference": `Practitioner/${requesterPractitionerId}`,
+            "display": requesterPractitionerName
+        },
+        "businessStatus": {
+            "text": "Received"
+        },
+        "owner": {
+            "reference": "PractitionerRole/example-practitionerRole",
+            "display": "Dr. Onwers"
+        },
+    };
+    return task;
 }
 
 // POST endpoint for creating a patient
@@ -401,7 +443,7 @@ app.post('/createServiceRequest', async (req, res) => {
             referralText
         } = req.body;
 
-        const serviceRequest = createPatientObject(
+        const serviceRequest = createServiceRequestObject(
             patientID,
             practitionerId,
             practitionerName,
@@ -421,7 +463,40 @@ app.post('/createServiceRequest', async (req, res) => {
 
         res.status(201).json(response.data);
     } catch (error) {
-        console.error('Error creating patient:', error);
+        console.error('Error creating service request:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// POST endpoint for creating a Task
+app.post('/createTask', async (req, res) => {
+    try {
+        const {
+            patientId,
+            serviceRequest,
+            requesterPractitionerId,
+            requesterPractitionerName
+        } = req.body;
+
+        const task = createTaskObject(
+            patientId,
+            serviceRequest,
+            requesterPractitionerId,
+            requesterPractitionerName
+        );
+
+        const fhirServerURL =  process.env.FHIR_SERVER_URL;
+        const accessToken = await getAzureADToken();
+        const response = await axios.post(`${fhirServerURL}/Task`, task, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        res.status(201).json(response.data);
+    } catch (error) {
+        console.error('Error creating task object:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
