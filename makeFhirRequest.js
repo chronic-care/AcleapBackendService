@@ -90,6 +90,65 @@ app.get('/search/Patient', async (req, res, next) => {
     }
 });
 
+// Fetch ServiceRequest resources for the given patient ID
+const getServiceRequestsForPatient = async (accessToken, patientId) => {
+    const headers = {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+        params: { 'subject': `Patient/${patientId}` }
+    };
+    return axios.get(`${fhirServerURL}/ServiceRequest`, headers);
+};
+
+// Fetch Task resources for a given ServiceRequest ID
+const getTasksForServiceRequest = async (accessToken, serviceRequestId) => {
+    const queryUrl = `${fhirServerURL}/Task?focus:ServiceRequest=${serviceRequestId}`;
+    return axios.get(queryUrl, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+        }
+    });
+};
+
+// Combine the logic in the route handler
+app.get('/modal/:patientId', async (req, res, next) => {
+    const { patientId } = req.params;
+
+    try {
+        const accessToken = req.accessToken;
+
+        // Fetch ServiceRequest resources for the patient
+        const serviceRequestsResponse = await getServiceRequestsForPatient(accessToken, patientId);
+        const serviceRequests = serviceRequestsResponse.data.entry || [];
+        console.log("serviceRequests", serviceRequests);
+        console.log("-----------------------------------");
+
+        // Extract ServiceRequest IDs
+        const serviceRequestIds = serviceRequests.map(entry => entry.resource.id);
+        console.log("serviceRequestIds", serviceRequestIds);
+        console.log("-----------------------------------");
+
+        // Fetch Task resources for each ServiceRequest ID
+        const taskPromises = serviceRequestIds.map(serviceRequestId => getTasksForServiceRequest(accessToken, serviceRequestId));
+        const tasksResponses = await Promise.all(taskPromises);
+        const tasks = tasksResponses.flatMap(response => response.data.entry || []);
+        console.log("tasks", tasks)
+        console.log("-----------------------------------");
+
+        // Combine results
+        const combinedResults = {
+            serviceRequests,
+            tasks
+        };
+        console.log("combinedResults", combinedResults)
+        console.log("-----------------------------------");
+
+        res.status(200).json(combinedResults);
+    } catch (error) {
+        next(error);
+    }
+});
+
 // Language code mapping
 const languageCodeMapping = {
     "Polish": "pl",
@@ -285,7 +344,7 @@ function createServiceRequestObject(
     organizationName,
     referralText
 ) {
-    return {
+    const serviceRequest = {
         "resourceType": "ServiceRequest",
         "status": "active",
         "intent": "order",
@@ -323,6 +382,7 @@ function createServiceRequestObject(
             }
         ]
     };
+    return serviceRequest;
 }
 
 //this fucntion creates a Task with the values coming from UI
