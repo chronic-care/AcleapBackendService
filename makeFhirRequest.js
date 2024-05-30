@@ -120,28 +120,20 @@ app.get('/modal/:patientId', async (req, res, next) => {
         // Fetch ServiceRequest resources for the patient
         const serviceRequestsResponse = await getServiceRequestsForPatient(accessToken, patientId);
         const serviceRequests = serviceRequestsResponse.data.entry || [];
-        console.log("serviceRequests", serviceRequests);
-        console.log("-----------------------------------");
 
         // Extract ServiceRequest IDs
         const serviceRequestIds = serviceRequests.map(entry => entry.resource.id);
-        console.log("serviceRequestIds", serviceRequestIds);
-        console.log("-----------------------------------");
 
         // Fetch Task resources for each ServiceRequest ID
         const taskPromises = serviceRequestIds.map(serviceRequestId => getTasksForServiceRequest(accessToken, serviceRequestId));
         const tasksResponses = await Promise.all(taskPromises);
         const tasks = tasksResponses.flatMap(response => response.data.entry || []);
-        console.log("tasks", tasks)
-        console.log("-----------------------------------");
 
         // Combine results
         const combinedResults = {
             serviceRequests,
             tasks
         };
-        console.log("combinedResults", combinedResults)
-        console.log("-----------------------------------");
 
         res.status(200).json(combinedResults);
     } catch (error) {
