@@ -52,7 +52,7 @@ app.use((error, req, res, next) => {
 });
 
 // Dynamically create route handlers for different FHIR resources
-const resources = ['Task', 'Patient', 'ServiceRequest', 'PractitionerRole'];
+const resources = ['Task', 'Patient', 'ServiceRequest', 'PractitionerRole', 'Organization'];
 resources.forEach(resource => {
     app.get(`/${resource}`, async (req, res, next) => {
         try {
