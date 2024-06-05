@@ -73,7 +73,7 @@ const searchPatients = async (accessToken, lastName, dob) => {
             'birthdate': dob
         }
     };
-    const patients = axios.get(`${fhirServerURL}/Patient`, headers);
+    const patients = axios.get(`${fhirServerURL}/Patient?${lastName}&${dob}`, headers);
     return patients
 };
 
