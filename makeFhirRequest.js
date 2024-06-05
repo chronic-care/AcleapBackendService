@@ -52,7 +52,7 @@ app.use((error, req, res, next) => {
 });
 
 // Dynamically create route handlers for different FHIR resources
-const resources = ['Task', 'Patient', 'ServiceRequest', 'PractitionerRole'];
+const resources = ['Task', 'Patient', 'ServiceRequest', 'PractitionerRole', 'Organization'];
 resources.forEach(resource => {
     app.get(`/${resource}`, async (req, res, next) => {
         try {
@@ -73,7 +73,7 @@ const searchPatients = async (accessToken, lastName, dob) => {
             'birthdate': dob
         }
     };
-    const patients = axios.get(`${fhirServerURL}/Patient`, headers);
+    const patients = axios.get(`${fhirServerURL}/Patient?${lastName}&${dob}`, headers);
     return patients
 };
 
