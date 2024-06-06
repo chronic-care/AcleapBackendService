@@ -383,7 +383,9 @@ function createTaskObject(
     patientId,
     serviceRequest,
     practitionerId,
-    practitionerName
+    practitionerName,
+    organizationId,
+    organizationName
 ) {
     task = {
         "resourceType": "Task",
@@ -404,22 +406,22 @@ function createTaskObject(
             ]
         },
         "focus": {
-            "reference": serviceRequest
+            "reference": `ServiceRequest/${serviceRequest}`
         },
         "for": {
-            "reference": patientId
+            "reference": `Patient/${patientId}`
         },
         "authoredOn": new Date().toISOString(),
         "requester": {
-            "reference": `Practitioner/${practitionerId}`,
-            "display": practitionerName
+            "reference": `Practitioner/${organizationId}`,
+            "display": organizationName
         },
         "businessStatus": {
             "text": "Received"
         },
         "owner": {
-            "reference": "PractitionerRole/example-practitionerRole",
-            "display": "Dr. Onwers"
+            "reference": `PractitionerRole/${practitionerId}`,
+            "display": practitionerName
         },
     };
     return task;
@@ -522,7 +524,9 @@ app.post('/createServiceRequestandtask', async (req, res) => {
             patientID,
             serviceRequestId,
             practitionerId,
-            practitionerName
+            practitionerName,
+            organizationId,
+            organizationName
         );
 
         const taskResponse = await axios.post(`${fhirServerURL}/Task`, task, {
