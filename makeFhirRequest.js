@@ -186,7 +186,7 @@ function createPatientObject(
     firstName,
     lastName,
     dateOfBirth,
-    gender,
+    administrativeGender,
     race,
     sexAtBirth,
     ethnicity,
@@ -216,7 +216,7 @@ function createPatientObject(
                 "given": [firstName]
             }
         ],
-        "gender": gender,
+        "gender": administrativeGender,
         "birthDate": dateOfBirth,
         "telecom": [
             {
@@ -271,7 +271,7 @@ function createPatientObject(
                 ]
             },
             {
-                "url": "http://hl7.org/fhir/StructureDefinition/us-core-ethnicity",
+                "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity",
                 "extension": [
                     {
                         "url": "ombCategory",
@@ -432,7 +432,7 @@ app.post('/createPatient', async (req, res) => {
             firstName,
             lastName,
             dateOfBirth,
-            gender,
+            administrativeGender,
             race,
             sexAtBirth,
             ethnicity,
@@ -452,7 +452,7 @@ app.post('/createPatient', async (req, res) => {
             firstName,
             lastName,
             dateOfBirth,
-            gender,
+            administrativeGender,
             race,
             sexAtBirth,
             ethnicity,
