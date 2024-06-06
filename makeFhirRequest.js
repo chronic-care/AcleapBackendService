@@ -334,7 +334,8 @@ function createServiceRequestObject(
     practitionerName,
     organizationId,
     organizationName,
-    referralText
+    referralText,
+    serviceRequestText
 ) {
     const serviceRequest = {
         "resourceType": "ServiceRequest",
@@ -353,7 +354,7 @@ function createServiceRequestObject(
             }
         ],
         "code": {
-            "text": "Chicago House TransLife Care"
+            "text": `${serviceRequestText}`
         },
         "subject": {
             "reference": `Patient/${patientID}`  
@@ -381,8 +382,8 @@ function createServiceRequestObject(
 function createTaskObject(
     patientId,
     serviceRequest,
-    requesterPractitionerId,
-    requesterPractitionerName
+    practitionerId,
+    practitionerName
 ) {
     task = {
         "resourceType": "Task",
@@ -410,8 +411,8 @@ function createTaskObject(
         },
         "authoredOn": new Date().toISOString(),
         "requester": {
-            "reference": `Practitioner/${requesterPractitionerId}`,
-            "display": requesterPractitionerName
+            "reference": `Practitioner/${practitionerId}`,
+            "display": practitionerName
         },
         "businessStatus": {
             "text": "Received"
@@ -483,8 +484,8 @@ app.post('/createPatient', async (req, res) => {
     }
 });
 
-// POST endpoint for creating a ServiceRequest
-app.post('/createServiceRequest', async (req, res) => {
+// POST endpoint for creating a ServiceRequest and also task  
+app.post('/createServiceRequestandtask', async (req, res) => {
     try {
         const {
             patientID,
@@ -492,7 +493,8 @@ app.post('/createServiceRequest', async (req, res) => {
             practitionerName,
             organizationId,
             organizationName,
-            referralText
+            referralText,
+            serviceRequestText
         } = req.body;
 
         const serviceRequest = createServiceRequestObject(
@@ -501,54 +503,41 @@ app.post('/createServiceRequest', async (req, res) => {
             practitionerName,
             organizationId,
             organizationName,
-            referralText
+            referralText,
+            serviceRequestText
         );
 
         const fhirServerURL =  process.env.FHIR_SERVER_URL;
         const accessToken = await getAzureADToken();
-        const response = await axios.post(`${fhirServerURL}/ServiceRequest`, serviceRequest, {
+        const serviceRequestResponse = await axios.post(`${fhirServerURL}/ServiceRequest`, serviceRequest, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+        const serviceRequestId = serviceRequestResponse.data.id;
+
+        // Create Task
+        const task = createTaskObject(
+            patientID,
+            serviceRequestId,
+            practitionerId,
+            practitionerName
+        );
+
+        const taskResponse = await axios.post(`${fhirServerURL}/Task`, task, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${accessToken}`
             }
         });
 
-        res.status(201).json(response.data);
+        res.status(201).json({
+            serviceRequest: serviceRequestResponse.data,
+            task: taskResponse.data
+        });
     } catch (error) {
         console.error('Error creating service request:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-// POST endpoint for creating a Task
-app.post('/createTask', async (req, res) => {
-    try {
-        const {
-            patientId,
-            serviceRequest,
-            requesterPractitionerId,
-            requesterPractitionerName
-        } = req.body;
-
-        const task = createTaskObject(
-            patientId,
-            serviceRequest,
-            requesterPractitionerId,
-            requesterPractitionerName
-        );
-
-        const fhirServerURL =  process.env.FHIR_SERVER_URL;
-        const accessToken = await getAzureADToken();
-        const response = await axios.post(`${fhirServerURL}/Task`, task, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
-            }
-        });
-
-        res.status(201).json(response.data);
-    } catch (error) {
-        console.error('Error creating task object:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
