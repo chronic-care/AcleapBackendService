@@ -186,7 +186,7 @@ function createPatientObject(
     firstName,
     lastName,
     dateOfBirth,
-    administrativeGender,
+    gender,
     race,
     sexAtBirth,
     ethnicity,
@@ -216,7 +216,7 @@ function createPatientObject(
                 "given": [firstName]
             }
         ],
-        "gender": administrativeGender,
+        "gender": gender,
         "birthDate": dateOfBirth,
         "telecom": [
             {
@@ -323,7 +323,6 @@ function createPatientObject(
                 }
             });
     }
-
     return patient;
 }
 
@@ -434,7 +433,7 @@ app.post('/createPatient', async (req, res) => {
             firstName,
             lastName,
             dateOfBirth,
-            administrativeGender,
+            gender,
             race,
             sexAtBirth,
             ethnicity,
@@ -454,7 +453,7 @@ app.post('/createPatient', async (req, res) => {
             firstName,
             lastName,
             dateOfBirth,
-            administrativeGender,
+            gender,
             race,
             sexAtBirth,
             ethnicity,
@@ -469,7 +468,6 @@ app.post('/createPatient', async (req, res) => {
             state,
             zipcode
         );
-
         const fhirServerURL =  process.env.FHIR_SERVER_URL;
         const accessToken = await getAzureADToken();
         const response = await axios.post(`${fhirServerURL}/Patient`, patient, {
@@ -483,6 +481,7 @@ app.post('/createPatient', async (req, res) => {
     } catch (error) {
         console.error('Error creating patient:', error);
         res.status(500).json({ error: 'Internal Server Error' });
+        throw error;
     }
 });
 
