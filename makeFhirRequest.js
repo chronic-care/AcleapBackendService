@@ -419,8 +419,8 @@ function createTaskObject(
             "text": "Received"
         },
         "owner": {
-            "reference": `PractitionerRole/${practitionerId}`,
-            "display": practitionerName
+            "reference": "PractitionerRole/example-practitionerRole",
+            "display": "Dr. Owners"
         },
     };
     return task;
