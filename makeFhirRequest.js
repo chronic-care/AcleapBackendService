@@ -52,7 +52,7 @@ app.use((error, req, res, next) => {
 });
 
 // Dynamically create route handlers for different FHIR resources
-const resources = ['Task', 'Patient', 'ServiceRequest', 'PractitionerRole', 'Organization'];
+const resources = ['Task', 'Patient', 'ServiceRequest', 'PractitionerRole', 'Organization', 'Practitioner'];
 resources.forEach(resource => {
     app.get(`/${resource}`, async (req, res, next) => {
         try {
@@ -578,6 +578,75 @@ async function updateTask(taskId, patchBody) {
       throw new Error('Error updating Task: ' + (error.response ? error.response.data : error.message));
     }
 }
+
+async function fetchAllBundles() {
+    try {
+        // Retrieve the FHIR server URL from environment variables
+        const fhirServerURL = process.env.FHIR_SERVER_URL;
+        const bundleUrl = `${fhirServerURL}/Bundle`;
+
+        // Assuming getAzureADToken function is defined somewhere to retrieve Azure AD token
+        const accessToken = await getAzureADToken();
+
+        const headers = {
+            'Authorization': `Bearer ${accessToken}`
+        };
+
+        // Make GET request to fetch Bundles
+        const response = await axios.get(bundleUrl, { headers });
+
+        // Check if response is successful and has data
+        if (!response || !response.data || !response.data.entry) {
+            throw new Error('No Bundles found or invalid response.');
+        }
+
+        const bundles = response.data.entry;
+
+        return bundles; // Return array of Bundles
+    } catch (error) {
+        console.error('Error fetching Bundles:', error);
+        throw error;
+    }
+}
+
+// Express route handler
+app.get('/PractitionerID/:practitionerId', async (req, res) => {
+    const { practitionerId } = req.params; // Extract practitionerId from URL params
+
+    try {
+        // Fetch all Bundles using the access token
+        const bundles = await fetchAllBundles();
+
+        let foundPractitioner = null;
+
+        // Iterate through bundles to find the Practitioner by ID
+        for (let i = 0; i < bundles.length; i++) {
+            const entries = bundles[i].resource.entry; // Assuming 'entry' is an array of entries in each bundle
+            
+            for (let j = 0; j < entries.length; j++) {
+                const entry = entries[j];
+                if (entry.resource && entry.resource.resourceType === 'Practitioner' && entry.resource.id === practitionerId) {
+                    foundPractitioner = `${entry.resource.name[0].given[0]} ${entry.resource.name[0].family}`;
+                    break; // Exit the inner loop once the Practitioner is found
+                }
+            }
+
+            if (foundPractitioner) {
+                break; // Exit the outer loop once the Practitioner is found
+            }
+        }
+
+        if (foundPractitioner) {
+            res.status(200).json(foundPractitioner); // Send JSON response with the found Practitioner
+        } else {
+            res.status(404).json({ error: `Practitioner with ID '${practitionerId}' not found in any Bundle.` });
+        }
+    } catch (error) {
+        console.error('Error in GET /PractitionerID:', error);
+        res.status(500).json({ error: 'Failed to fetch or process data.' });
+    }
+});
+
 
 // Simple route handler for '/health' to confirm the service is running
 app.get('/health', (req, res) => {
