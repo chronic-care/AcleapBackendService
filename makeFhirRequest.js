@@ -188,7 +188,7 @@ function createPatientObject(
     dateOfBirth,
     gender,
     race,
-    sexAtBirth,
+    sex_at_birth,
     ethnicity,
     genderIdentity,
     sexualOrientation,
@@ -204,7 +204,7 @@ function createPatientObject(
     const LanguageCode = languageCodeMapping[language] || "UNK";
     const ethnicityCode = ethnicityCodeMapping[ethnicity] || "UNK";
     const raceCode = raceCodeMapping[race] || "UNK";
-    const sexAtBirthCode = sexAtBirthCodeMapping[sexAtBirth] || "UNK";
+    const sexAtBirthCode = sexAtBirthCodeMapping[sex_at_birth] || "UNK";
 
     const patient = {
         "resourceType": "Patient",
@@ -435,7 +435,7 @@ app.post('/createPatient', async (req, res) => {
             dateOfBirth,
             gender,
             race,
-            sexAtBirth,
+            sex_at_birth,
             ethnicity,
             genderIdentity,
             sexualOrientation,
@@ -455,7 +455,7 @@ app.post('/createPatient', async (req, res) => {
             dateOfBirth,
             gender,
             race,
-            sexAtBirth,
+            sex_at_birth,
             ethnicity,
             genderIdentity,
             sexualOrientation,
